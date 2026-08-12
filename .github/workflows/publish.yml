@@ -57,6 +57,13 @@ jobs:
           echo "Publishing version ${PKG}"
 
       # No NODE_AUTH_TOKEN: authentication is OIDC via the id-token permission
-      # above. Provenance is attested automatically (publishConfig.provenance).
+      # above.
+      #
+      # Provenance is enabled here rather than in publishConfig, because it
+      # requires a CI provider with OIDC. Setting it in package.json would make
+      # a local `npm publish` fail with "Automatic provenance generation not
+      # supported for provider: null".
       - name: Publish to npm
         run: npm publish
+        env:
+          NPM_CONFIG_PROVENANCE: true
