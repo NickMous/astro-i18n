@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from `engines`, and current. The floor matters because the
+        # package is consumed by projects that may not be on the latest Node.
+        node: ['22.12', '24']
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run check
+
+      # Runs the runtime suite and the *.test-d.ts type suite together.
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

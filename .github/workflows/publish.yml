@@ -1,0 +1,62 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Required for npm trusted publishing (OIDC). Without it, npm falls back to
+  # looking for a token and the publish fails with a 401.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing needs npm >= 11.5.1. Don't rely on whatever npm the
+      # Node image happens to bundle.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run check
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # A release tagged v0.2.0 against a package.json still saying 0.1.0 would
+      # publish the wrong version under the right name. npm versions are
+      # immutable, so this has to fail before `npm publish`, not after.
+      - name: Verify tag matches package.json version
+        if: github.event_name == 'release'
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Release tag v${TAG} does not match package.json version ${PKG}"
+            exit 1
+          fi
+          echo "Publishing version ${PKG}"
+
+      # No NODE_AUTH_TOKEN: authentication is OIDC via the id-token permission
+      # above. Provenance is attested automatically (publishConfig.provenance).
+      - name: Publish to npm
+        run: npm publish

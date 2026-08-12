@@ -12,6 +12,14 @@
     "type-safe",
     "internationalization"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NickMous/astro-i18n.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NickMous/astro-i18n/issues"
+  },
+  "homepage": "https://github.com/NickMous/astro-i18n#readme",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -40,6 +48,7 @@
     "vitest": "^4.1.10"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   }
 }
