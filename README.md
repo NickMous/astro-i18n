@@ -207,6 +207,40 @@ npm run build       # emit dist/
 
 Type tests live in `test/*.test-d.ts` and run under `vitest --typecheck`. They are the primary regression guard: if the generics go slack, every runtime test still passes while the package silently loses its only real feature.
 
+## Releasing
+
+Publishing runs on GitHub Actions via [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) (OIDC) — there is no `NPM_TOKEN` stored anywhere.
+
+To cut a release:
+
+```sh
+npm version patch   # or minor / major — commits and tags
+git push --follow-tags
+gh release create "v$(node -p "require('./package.json').version")" --generate-notes
+```
+
+Publishing the GitHub release triggers `.github/workflows/publish.yml`, which typechecks, tests, builds, verifies the tag matches `package.json`, and publishes with a provenance attestation.
+
+### One-time bootstrap
+
+Trusted publishing is configured per package and the settings page only exists once the package does, so the very first release is published from a local machine:
+
+```sh
+npm login
+npm publish
+```
+
+Then enable CI publishing at `https://www.npmjs.com/package/@nickmous/astro-i18n/access` → **Trusted Publisher** → GitHub Actions, with:
+
+| Field | Value |
+| --- | --- |
+| Organization or user | `NickMous` |
+| Repository | `astro-i18n` |
+| Workflow filename | `publish.yml` |
+| Environment | *(leave blank)* |
+
+Every release after that goes through Actions.
+
 ## Licence
 
 MIT
